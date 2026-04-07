@@ -1,0 +1,13 @@
+config.py
+__pycache__/
+.env
+*.pyc
+sleepsense-491911-4c989b81c85d.json
+.venv
+.venv/
+venv/
+env/
+bin/
+lib/
+include/
+pyvenv.cfg
