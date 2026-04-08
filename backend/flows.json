@@ -1,0 +1,1122 @@
+[
+    {
+        "id": "54995f5a8240e2ac",
+        "type": "tab",
+        "label": "Project",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d0762261f4ebd748",
+        "type": "group",
+        "z": "54995f5a8240e2ac",
+        "name": "sleep sense acquisition flow",
+        "style": {
+            "stroke": "#dbcbe7",
+            "label": true,
+            "fill": "#dbcbe7",
+            "fill-opacity": "0.2"
+        },
+        "nodes": [
+            "8af54630b2de23c8",
+            "5ead737889bd4ce2",
+            "f714cc70212d397c",
+            "0c02d6dad4011ca2",
+            "f306c99b071a4715",
+            "bb4667aa8270f933"
+        ],
+        "x": 114,
+        "y": 19,
+        "w": 852,
+        "h": 202
+    },
+    {
+        "id": "f6aba33dfbcbaf65",
+        "type": "group",
+        "z": "54995f5a8240e2ac",
+        "name": "show last update",
+        "style": {
+            "stroke": "#dbcbe7",
+            "fill": "#dbcbe7",
+            "fill-opacity": "0.2",
+            "label": true
+        },
+        "nodes": [
+            "ce06066a08b69710",
+            "db3b35b1b5c31742",
+            "9746eba383bec050",
+            "314305f18289bf2c",
+            "d4fd09e58a68b8fe",
+            "51fea5012cf33e6c",
+            "050a456f417d11ae",
+            "14f583bceb9c2ecb",
+            "2808bae22c8eb9c0",
+            "d49544fe2317b4b3",
+            "fc5674f0f562f1d5",
+            "f4c1ecd62fe89aef",
+            "ea9c08369a7e6768",
+            "fc9c1da2f9485c5b",
+            "638403efa32d4436",
+            "9211f09a73b8ae4a",
+            "3a262a8971aec0f3",
+            "db594026f120de53",
+            "9762ad0842415a91",
+            "ca85c7535105068a"
+        ],
+        "x": 114,
+        "y": 839,
+        "w": 972,
+        "h": 702
+    },
+    {
+        "id": "e165349edc091fc8",
+        "type": "group",
+        "z": "54995f5a8240e2ac",
+        "name": "api making flow [GET] /sleepsense ",
+        "style": {
+            "label": true,
+            "stroke": "#dbcbe7",
+            "fill": "#dbcbe7",
+            "fill-opacity": "0.2"
+        },
+        "nodes": [
+            "d5147dfb9d8d3d60",
+            "e3b9f32efb06f23d",
+            "568d716fc82d30a3",
+            "54df4849ca7e9f04",
+            "0bab63faa01c19b1"
+        ],
+        "x": 114,
+        "y": 239,
+        "w": 852,
+        "h": 142
+    },
+    {
+        "id": "9f8c5fd10f854a33",
+        "type": "group",
+        "z": "54995f5a8240e2ac",
+        "name": "api making flow [GET] /sleepsense/range?start=&end=",
+        "style": {
+            "label": true,
+            "stroke": "#dbcbe7",
+            "fill": "#dbcbe7",
+            "fill-opacity": "0.2"
+        },
+        "nodes": [
+            "327189da9c314135",
+            "369d54e4a1c12614",
+            "a35aca14cd0f31ed",
+            "fd8e102bbca96278",
+            "51c44a9970f792d6",
+            "35c85c56f0a16bc2",
+            "eb299e4724496712"
+        ],
+        "x": 114,
+        "y": 399,
+        "w": 852,
+        "h": 222
+    },
+    {
+        "id": "4b2d4ee6610423a2",
+        "type": "group",
+        "z": "54995f5a8240e2ac",
+        "name": "api making flow [GET] /sleepsense/score ",
+        "style": {
+            "label": true,
+            "stroke": "#dbcbe7",
+            "fill": "#dbcbe7",
+            "fill-opacity": "0.2"
+        },
+        "nodes": [
+            "4e595fc9d38ec4c2",
+            "85d860ccb1a5ae9b",
+            "eb68e37e82e6eb15",
+            "1de0a697d564bb90",
+            "18b42d97290f31d8"
+        ],
+        "x": 114,
+        "y": 639,
+        "w": 852,
+        "h": 162
+    },
+    {
+        "id": "8af54630b2de23c8",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "d0762261f4ebd748",
+        "name": "insert to table",
+        "func": "let d = msg.payload;\n\nmsg.topic = `\nINSERT INTO SleepSense\n(device_id, temp_c, hum_pct, light_lux, snd_avg, snd_peak, snd_var, snd_evt, pm1, pm25, pm10)\nVALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n`;\n\nmsg.payload = [\n    d.device_id,\n    d.temp_c,\n    d.hum_pct,\n    d.light_lux,\n    d.snd_avg,\n    d.snd_peak,\n    d.snd_var,\n    d.snd_evt,\n    d.pm1,\n    d.pm25,\n    d.pm10\n];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 120,
+        "wires": [
+            [
+                "5ead737889bd4ce2"
+            ]
+        ]
+    },
+    {
+        "id": "5ead737889bd4ce2",
+        "type": "mysql",
+        "z": "54995f5a8240e2ac",
+        "g": "d0762261f4ebd748",
+        "mydb": "56b8d4218357bad8",
+        "name": "SleepSense",
+        "x": 490,
+        "y": 60,
+        "wires": [
+            [
+                "f714cc70212d397c"
+            ]
+        ]
+    },
+    {
+        "id": "f714cc70212d397c",
+        "type": "debug",
+        "z": "54995f5a8240e2ac",
+        "g": "d0762261f4ebd748",
+        "name": "debug sleepsense",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 830,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "0c02d6dad4011ca2",
+        "type": "mqtt in",
+        "z": "54995f5a8240e2ac",
+        "g": "d0762261f4ebd748",
+        "name": "mqtt sleep sense",
+        "topic": "b6410545576/sleepsense/SleepSense_01",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "163f0b9e7a8bc40c",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 220,
+        "y": 60,
+        "wires": [
+            [
+                "8af54630b2de23c8",
+                "f306c99b071a4715"
+            ]
+        ]
+    },
+    {
+        "id": "f306c99b071a4715",
+        "type": "debug",
+        "z": "54995f5a8240e2ac",
+        "g": "d0762261f4ebd748",
+        "name": "print value",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 470,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "ce06066a08b69710",
+        "type": "inject",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "60",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 230,
+        "y": 940,
+        "wires": [
+            [
+                "d49544fe2317b4b3"
+            ]
+        ]
+    },
+    {
+        "id": "db3b35b1b5c31742",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "name": "show query",
+        "func": "let row = msg.payload[0];\n\nfunction formatBangkokDate(input) {\n    if (!input) return \"N/A\";\n\n    let d = new Date(input);\n    if (isNaN(d.getTime())) return \"N/A\";\n\n    let formatter = new Intl.DateTimeFormat(\"en-GB\", {\n        timeZone: \"Asia/Bangkok\",\n        day: \"2-digit\",\n        month: \"long\",\n        year: \"numeric\",\n        hour: \"2-digit\",\n        minute: \"2-digit\",\n        second: \"2-digit\",\n        hour12: false\n    });\n\n    let parts = formatter.formatToParts(d);\n    let map = {};\n    for (let p of parts) {\n        map[p.type] = p.value;\n    }\n\n    return `${map.day} ${map.month} ${map.year} ${map.hour}:${map.minute}:${map.second} Asia/Bangkok`;\n}\n\nif (!row) {\n    return new Array(15).fill({ payload: \"N/A\" });\n}\n\n\nreturn [\n    { payload: row.id || \"N/A\" },\n    { payload: formatBangkokDate(row.timestamp) },\n\n    { payload: `${row.temp_c ?? \"N/A\"} °C` },\n    { payload: `${row.hum_pct ?? \"N/A\"} %` },\n    { payload: `${row.light_lux ?? \"N/A\"} lux` },\n    { payload: `${row.snd_avg ?? \"N/A\"} dB` },\n    { payload: `${row.snd_evt ?? \"N/A\"} times` },\n    { payload: `${row.pm1 ?? \"N/A\"} µg/m³` },\n    { payload: `${row.pm25 ?? \"N/A\"} µg/m³` },\n    { payload: `${row.pm10 ?? \"N/A\"} µg/m³` },\n\n    // ----- scores -----\n    { payload: row.linear_regression_score ?? \"N/A\" },\n    { payload: row.ridge1_score ?? \"N/A\" },\n    { payload: row.lasso_score ?? \"N/A\" },\n    { payload: row.random_forest_score ?? \"N/A\" },\n    { payload: row.gradient_boosting_score ?? \"N/A\" }\n];",
+        "outputs": 15,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 610,
+        "y": 1060,
+        "wires": [
+            [
+                "2808bae22c8eb9c0"
+            ],
+            [
+                "9746eba383bec050"
+            ],
+            [
+                "314305f18289bf2c"
+            ],
+            [
+                "d4fd09e58a68b8fe"
+            ],
+            [
+                "51fea5012cf33e6c"
+            ],
+            [
+                "050a456f417d11ae"
+            ],
+            [
+                "14f583bceb9c2ecb"
+            ],
+            [
+                "fc5674f0f562f1d5"
+            ],
+            [
+                "f4c1ecd62fe89aef"
+            ],
+            [
+                "ea9c08369a7e6768"
+            ],
+            [
+                "9211f09a73b8ae4a"
+            ],
+            [
+                "3a262a8971aec0f3"
+            ],
+            [
+                "db594026f120de53"
+            ],
+            [
+                "9762ad0842415a91"
+            ],
+            [
+                "ca85c7535105068a"
+            ]
+        ]
+    },
+    {
+        "id": "9746eba383bec050",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Recorded At",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 870,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "314305f18289bf2c",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Tempurature",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 870,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "d4fd09e58a68b8fe",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Humidity",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 880,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "51fea5012cf33e6c",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Light Intensity",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 860,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "050a456f417d11ae",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Sound Intensity",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 860,
+        "y": 1080,
+        "wires": []
+    },
+    {
+        "id": "14f583bceb9c2ecb",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Sound Event",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 870,
+        "y": 1120,
+        "wires": []
+    },
+    {
+        "id": "2808bae22c8eb9c0",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "className": "",
+        "style": true,
+        "font": "",
+        "fontSize": 16,
+        "color": "#7f6c89",
+        "x": 870,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "d49544fe2317b4b3",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "name": "select table",
+        "func": "msg.topic = `\nSELECT *\nFROM sleep_score_history\nORDER BY recorded_at DESC\nLIMIT 1;\n`;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 1000,
+        "wires": [
+            [
+                "fc9c1da2f9485c5b"
+            ]
+        ]
+    },
+    {
+        "id": "fc5674f0f562f1d5",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "PM1",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 890,
+        "y": 1160,
+        "wires": []
+    },
+    {
+        "id": "f4c1ecd62fe89aef",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 9,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "PM2.5",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 890,
+        "y": 1200,
+        "wires": []
+    },
+    {
+        "id": "ea9c08369a7e6768",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "137c1267e49c65ac",
+        "order": 10,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "PM10",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 890,
+        "y": 1240,
+        "wires": []
+    },
+    {
+        "id": "d5147dfb9d8d3d60",
+        "type": "http in",
+        "z": "54995f5a8240e2ac",
+        "g": "e165349edc091fc8",
+        "name": "",
+        "url": "/api/sleepsense",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 290,
+        "y": 280,
+        "wires": [
+            [
+                "e3b9f32efb06f23d"
+            ]
+        ]
+    },
+    {
+        "id": "e3b9f32efb06f23d",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "e165349edc091fc8",
+        "name": "build SQL",
+        "func": "msg.topic = `\n  SELECT \n    id, \n    device_id, \n    recorded_at, \n    temp_c, \n    hum_pct, \n    light_lux, \n    snd_avg, \n    snd_peak, \n    snd_var, \n    snd_evt,\n    pm1,\n    pm25,\n    pm10\n  FROM SleepSense\n  ORDER BY recorded_at ASC;\n`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 340,
+        "wires": [
+            [
+                "568d716fc82d30a3"
+            ]
+        ]
+    },
+    {
+        "id": "568d716fc82d30a3",
+        "type": "mysql",
+        "z": "54995f5a8240e2ac",
+        "g": "e165349edc091fc8",
+        "mydb": "56b8d4218357bad8",
+        "name": "SleepSense",
+        "x": 570,
+        "y": 340,
+        "wires": [
+            [
+                "54df4849ca7e9f04"
+            ]
+        ]
+    },
+    {
+        "id": "54df4849ca7e9f04",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "e165349edc091fc8",
+        "name": "format JSON",
+        "func": "msg.payload = {\n  success: true,\n  count: msg.payload.length,\n  data: msg.payload\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 280,
+        "wires": [
+            [
+                "0bab63faa01c19b1"
+            ]
+        ]
+    },
+    {
+        "id": "0bab63faa01c19b1",
+        "type": "http response",
+        "z": "54995f5a8240e2ac",
+        "g": "e165349edc091fc8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 890,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "327189da9c314135",
+        "type": "http in",
+        "z": "54995f5a8240e2ac",
+        "g": "9f8c5fd10f854a33",
+        "name": "",
+        "url": "/api/sleepsense/range",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 310,
+        "y": 440,
+        "wires": [
+            [
+                "369d54e4a1c12614"
+            ]
+        ]
+    },
+    {
+        "id": "369d54e4a1c12614",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "9f8c5fd10f854a33",
+        "name": "validate + prepare query",
+        "func": "const query = msg.req.query || {};\n\nconst start = query.start;\nconst end = query.end;\nconst rawLimit = query.limit;\n\n// รับ format: YYYY-MM-DD HH:MM:SS\nconst dtRegex = /^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/;\n\nfunction badRequest(message) {\n    msg.statusCode = 400;\n    msg.payload = {\n        success: false,\n        error: message\n    };\n    return [null, msg];\n}\n\nif (!start || !end) {\n    return badRequest(\"Both 'start' and 'end' query parameters are required.\");\n}\n\nif (!dtRegex.test(start) || !dtRegex.test(end)) {\n    return badRequest(\"Invalid datetime format. Use YYYY-MM-DD HH:MM:SS\");\n}\n\n// parse แบบปลอดภัยเบื้องต้น\nconst startDate = new Date(start.replace(\" \", \"T\"));\nconst endDate = new Date(end.replace(\" \", \"T\"));\n\nif (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {\n    return badRequest(\"Invalid datetime value.\");\n}\n\nif (startDate > endDate) {\n    return badRequest(\"'start' must be earlier than or equal to 'end'.\");\n}\n\n// จำกัด limit เพื่อกัน query ใหญ่เกิน\nlet limit = 1000;\nif (rawLimit !== undefined) {\n    limit = parseInt(rawLimit, 10);\n    if (isNaN(limit) || limit < 1) {\n        return badRequest(\"'limit' must be a positive integer.\");\n    }\n    if (limit > 5000) {\n        return badRequest(\"'limit' must not be greater than 5000.\");\n    }\n}\n\n// prepared query with named parameters\nmsg.topic = `\n    SELECT\n        id,\n        device_id,\n        recorded_at,\n        temp_c,\n        hum_pct,\n        light_lux,\n        snd_avg,\n        snd_evt,\n        pm1,\n        pm25,\n        pm10\n    FROM SleepSense\n    WHERE recorded_at BETWEEN :start AND :end\n    ORDER BY recorded_at ASC\n    LIMIT :limit;\n`;\n\nmsg.payload = {\n    start,\n    end,\n    limit\n};\n\n// metadata ไว้ใช้ตอบกลับ\nmsg.apiMeta = {\n    start,\n    end,\n    limit\n};\n\nreturn [msg, null];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 500,
+        "wires": [
+            [
+                "a35aca14cd0f31ed"
+            ],
+            [
+                "51c44a9970f792d6"
+            ]
+        ]
+    },
+    {
+        "id": "a35aca14cd0f31ed",
+        "type": "mysql",
+        "z": "54995f5a8240e2ac",
+        "g": "9f8c5fd10f854a33",
+        "mydb": "56b8d4218357bad8",
+        "name": "SleepSense",
+        "x": 630,
+        "y": 440,
+        "wires": [
+            [
+                "fd8e102bbca96278"
+            ]
+        ]
+    },
+    {
+        "id": "fd8e102bbca96278",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "9f8c5fd10f854a33",
+        "name": "success response",
+        "func": "const rows = Array.isArray(msg.payload) ? msg.payload : [];\n\nmsg.statusCode = 200;\nmsg.payload = {\n    success: true,\n    query: {\n        start: msg.apiMeta?.start || null,\n        end: msg.apiMeta?.end || null,\n        limit: msg.apiMeta?.limit || null\n    },\n    count: rows.length,\n    data: rows\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 830,
+        "y": 440,
+        "wires": [
+            [
+                "51c44a9970f792d6"
+            ]
+        ]
+    },
+    {
+        "id": "51c44a9970f792d6",
+        "type": "http response",
+        "z": "54995f5a8240e2ac",
+        "g": "9f8c5fd10f854a33",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 890,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "35c85c56f0a16bc2",
+        "type": "catch",
+        "z": "54995f5a8240e2ac",
+        "g": "9f8c5fd10f854a33",
+        "name": "",
+        "scope": [
+            "a35aca14cd0f31ed",
+            "568d716fc82d30a3"
+        ],
+        "uncaught": false,
+        "x": 430,
+        "y": 580,
+        "wires": [
+            [
+                "eb299e4724496712"
+            ]
+        ]
+    },
+    {
+        "id": "eb299e4724496712",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "9f8c5fd10f854a33",
+        "name": "db error response",
+        "func": "msg.statusCode = 500;\nmsg.payload = {\n    success: false,\n    error: \"Database query failed.\",\n    detail: msg.error?.message || \"Unknown database error\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 580,
+        "wires": [
+            [
+                "51c44a9970f792d6"
+            ]
+        ]
+    },
+    {
+        "id": "bb4667aa8270f933",
+        "type": "catch",
+        "z": "54995f5a8240e2ac",
+        "g": "d0762261f4ebd748",
+        "name": "",
+        "scope": "group",
+        "uncaught": false,
+        "x": 690,
+        "y": 180,
+        "wires": [
+            [
+                "f714cc70212d397c"
+            ]
+        ]
+    },
+    {
+        "id": "4e595fc9d38ec4c2",
+        "type": "http in",
+        "z": "54995f5a8240e2ac",
+        "g": "4b2d4ee6610423a2",
+        "name": "",
+        "url": "/api/sleepsense/score",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 310,
+        "y": 680,
+        "wires": [
+            [
+                "85d860ccb1a5ae9b"
+            ]
+        ]
+    },
+    {
+        "id": "85d860ccb1a5ae9b",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "4b2d4ee6610423a2",
+        "name": "query",
+        "func": "msg.topic = \"SELECT * FROM sleep_score_history ORDER BY timestamp DESC LIMIT 20;\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 760,
+        "wires": [
+            [
+                "eb68e37e82e6eb15"
+            ]
+        ]
+    },
+    {
+        "id": "eb68e37e82e6eb15",
+        "type": "mysql",
+        "z": "54995f5a8240e2ac",
+        "g": "4b2d4ee6610423a2",
+        "mydb": "56b8d4218357bad8",
+        "name": "SleepSense",
+        "x": 630,
+        "y": 680,
+        "wires": [
+            [
+                "1de0a697d564bb90"
+            ]
+        ]
+    },
+    {
+        "id": "1de0a697d564bb90",
+        "type": "function",
+        "z": "54995f5a8240e2ac",
+        "g": "4b2d4ee6610423a2",
+        "name": "api formatter",
+        "func": "const rows = msg.payload;\n\n// ตรวจสอบว่ามีข้อมูลไหม\nif (!rows || rows.length === 0) {\n    msg.payload = { message: \"No data found\" };\n    return msg;\n}\n\nconst formattedData = rows.map(row => ({\n    \"id\": row.id,\n    \"timestamp\": row.timestamp,\n    \"factors\": {\n        \"temp_c\": row.temp_c,\n        \"hum_pct\": row.hum_pct,\n        \"light_lux\": row.light_lux,\n        \"snd_avg\": row.snd_avg,\n        \"snd_peak\": row.snd_peak,\n        \"snd_var\": row.snd_var,\n        \"snd_evt\": row.snd_evt,\n        \"pm1\": row.pm1,\n        \"pm25\": row.pm25,\n        \"pm10\": row.pm10\n    },\n    \"sleep_scores\": {\n        \"linear_regression_score\": row.linear_regression_score,\n        \"ridge1_score\": row.ridge1_score,\n        \"lasso_score\": row.lasso_score,\n        \"random_forest_score\": row.random_forest_score,\n        \"gradient_boosting_score\": row.gradient_boosting_score\n    }\n}));\n\nmsg.payload = formattedData;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 760,
+        "wires": [
+            [
+                "18b42d97290f31d8"
+            ]
+        ]
+    },
+    {
+        "id": "18b42d97290f31d8",
+        "type": "http response",
+        "z": "54995f5a8240e2ac",
+        "g": "4b2d4ee6610423a2",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 890,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "fc9c1da2f9485c5b",
+        "type": "mysql",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "mydb": "56b8d4218357bad8",
+        "name": "sleep sense",
+        "x": 430,
+        "y": 1060,
+        "wires": [
+            [
+                "db3b35b1b5c31742"
+            ]
+        ]
+    },
+    {
+        "id": "638403efa32d4436",
+        "type": "ui_template",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "",
+        "name": "",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "format": "<style>\n/* ===== page ===== */\nhtml, body,\nbody,\n.nr-dashboard-theme,\nmd-content,\nmd-content.md-default-theme {\n    background: linear-gradient(180deg, #faf6fc 0%, #f5f0f9 100%) !important;\n    font-family: \"Segoe UI\", \"Noto Sans Thai\", sans-serif !important;\n    color: #3f3650 !important;\n}\n\n/* ===== top bar ===== */\nmd-toolbar {\n    background: linear-gradient(90deg, #b8a2d6, #aa94cb) !important;\n    color: #fff !important;\n    box-shadow: 0 2px 10px rgba(120, 95, 150, 0.10) !important;\n}\n\nmd-toolbar .md-toolbar-tools {\n    font-size: 18px !important;\n    font-weight: 600 !important;\n    letter-spacing: 0.1px;\n}\n\n/* ===== overall spacing ===== */\n.nr-dashboard-theme .layout-row > .flex {\n    padding: 5px !important;\n}\n\n/* ===== group panels ===== */\n.nr-dashboard-cardpanel {\n    background: rgba(255,255,255,0.88) !important;\n    border: 1px solid #eadff2 !important;\n    border-radius: 14px !important;   /* แก้โค้ง */\n    box-shadow: 0 3px 10px rgba(110, 90, 145, 0.06) !important;\n    min-height: 100% !important;\n    overflow: hidden !important;\n    backdrop-filter: none !important;\n    -webkit-backdrop-filter: none !important;\n}\n\n/* ===== group title ===== */\n.nr-dashboard-cardtitle {\n    color: #5e4b73 !important;\n    font-size: 17px !important;\n    font-weight: 700 !important;\n    text-align: center !important;\n    padding: 10px 8px 10px 8px !important;\n    line-height: 1.3 !important;\n}\n\n/* ===== summary side ===== */\n.nr-dashboard-text {\n    background: transparent !important;\n    padding: 2px 6px !important;\n    border-radius: 8px !important;\n}\n\n.nr-dashboard-text p,\n.nr-dashboard-text span,\n.nr-dashboard-text div {\n    color: #3f3650 !important;\n    font-size: 14px !important;\n    line-height: 1.35 !important;\n}\n\n/* ===== charts ===== */\n.nr-dashboard-chart {\n    background: #fffdfe !important;\n    border: 1px solid #eee4f4 !important;\n    border-radius: 12px !important;   /* แก้โค้ง */\n    padding: 4px !important;\n    box-shadow: none !important;\n    overflow: hidden !important;\n}\n\n/* chart text */\n.nr-dashboard-chart text,\nsvg text {\n    fill: #6d607f !important;\n    font-size: 11px !important;\n}\n\n/* chart title */\n.nr-dashboard-chart-title,\n.nr-dashboard-chart .nr-dashboard-chart-title {\n    font-size: 14px !important;\n    font-weight: 600 !important;\n    color: #4f435f !important;\n}\n\n/* ===== make it feel like one screen ===== */\n.nr-dashboard-cardpanel {\n    min-height: 100% !important;\n}\n\n/* ===== subtle hover ===== */\n.nr-dashboard-cardpanel:hover,\n.nr-dashboard-chart:hover {\n    box-shadow: 0 6px 16px rgba(110, 90, 145, 0.08) !important;\n    transition: all 0.2s ease;\n}\n\n/* ===== internal cards ===== */\nmd-card {\n    border-radius: 10px !important;\n    box-shadow: none !important;\n}\n\n/* ===== scrollbar ===== */\n::-webkit-scrollbar {\n    width: 10px;\n}\n::-webkit-scrollbar-thumb {\n    background: #d7cae6;\n    border-radius: 999px;\n}\n::-webkit-scrollbar-track {\n    background: transparent;\n}\n\n/* ===== center whole dashboard on wide screen ===== */\n@media (min-width: 1300px) {\n    .nr-dashboard-theme {\n        max-width: 1780px;\n        margin: 0 auto;\n    }\n}\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "global",
+        "className": "",
+        "x": 440,
+        "y": 1200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9211f09a73b8ae4a",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "1339cfce737d0516",
+        "order": 10,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Linear Regression Score:",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 950,
+        "y": 1340,
+        "wires": []
+    },
+    {
+        "id": "3a262a8971aec0f3",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "1339cfce737d0516",
+        "order": 12,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Ridge Score:",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 910,
+        "y": 1380,
+        "wires": []
+    },
+    {
+        "id": "db594026f120de53",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "1339cfce737d0516",
+        "order": 11,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Lasso Score:",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 910,
+        "y": 1420,
+        "wires": []
+    },
+    {
+        "id": "9762ad0842415a91",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "1339cfce737d0516",
+        "order": 14,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Random Forest:",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 920,
+        "y": 1460,
+        "wires": []
+    },
+    {
+        "id": "ca85c7535105068a",
+        "type": "ui_text",
+        "z": "54995f5a8240e2ac",
+        "g": "f6aba33dfbcbaf65",
+        "group": "1339cfce737d0516",
+        "order": 13,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Gradient Boosting Score:",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 950,
+        "y": 1500,
+        "wires": []
+    },
+    {
+        "id": "8e93c2f1631e2178",
+        "type": "ui_spacer",
+        "z": "54995f5a8240e2ac",
+        "name": "spacer",
+        "group": "1339cfce737d0516",
+        "order": 1,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "56b8d4218357bad8",
+        "type": "MySQLdatabase",
+        "name": "b6410545576",
+        "host": "iot.cpe.ku.ac.th",
+        "port": "3306",
+        "db": "b6410545576",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "163f0b9e7a8bc40c",
+        "type": "mqtt-broker",
+        "name": "KUIOT_SLEEPSENSE",
+        "broker": "iot.cpe.ku.ac.th",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "137c1267e49c65ac",
+        "type": "ui_group",
+        "name": "Last Update",
+        "tab": "e7809ee94ff8c67f",
+        "order": 1,
+        "disp": false,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "1339cfce737d0516",
+        "type": "ui_group",
+        "name": "Realtime Chart",
+        "tab": "e7809ee94ff8c67f",
+        "order": 2,
+        "disp": false,
+        "width": "20",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "e7809ee94ff8c67f",
+        "type": "ui_tab",
+        "name": "SleepSense",
+        "icon": "timeline",
+        "order": 1,
+        "disabled": false,
+        "hidden": false,
+        "info": "hello"
+    }
+]
