@@ -31,20 +31,29 @@ We utilize a **KidBright** board to collect data from four primary sensors, cali
   * **MAX4466:** Sound Intensity (dB - `snd_avg`) and Noise Events (Times - `snd_evt`).
   * **PMS7003:** Particulate Matter (µg/m³ - `pm1`, `pm25`, `pm10`).
 
+    ![SleepSense Sensor Wiring](images/SleepSense_Sensor_Wiring.png)
+
 ### 2\. Cloud Backend & Ingestion
 
   * **Communication:** Data is transmitted via **MQTT**.
+  
+    ![SleepSense MQTT Flow NodeRED](images/SleepSense_MQTT_Flow_NodeRED.png)
+
   * **Backend:** **Node-RED** acts as the central hub, subscribing to MQTT topics and storing sensor data in a SQL Database every 10 minutes calles **sensor\_table**.
   * **Check-in Data:** A Google Form "Morning Check-in" collects manual sleep scores and sleep duration windows into a **checkin\_table**.
   * **Research Data:** A **research\_table** contains secondary data (e.g., optimal temperature ranges of 18-22°C) to provide a baseline for the ML model.
+  
+    ![SleepSense Pre-Process Table](images/SleepSense_Pre_Process_Table.png)
 
 ### 3\. Open APIs
 
-Three RESTful endpoints were developed via Node-RED for data accessibility:
+**3 RESTful endpoints** were developed via Node-RED for data accessibility:
 
 1.  `GET /api/sleepsense/`: Fetches all sensor data and the latest reading for real-time scoring.
 2.  `GET /api/sleepsense/range?start={T1}&end={T2}`: Retrieves specific time-range data for model training.
 3.  `GET /api/sleepsense/score`: Stores history of calculated scores and factors for longitudinal analysis.
+
+    ![API Making Flow NodeRED](images/SleepSense_API_Making_Flow_NodeRED.png)   
 
 -----
 
@@ -65,7 +74,7 @@ The data processing is handled in a Jupyter Notebook environment:
 
 ## Streamlit Dashboard
 
-The **Streamlit** application provides a professional "Minimal & Zen" interface to:
+The **Streamlit** application provides a professional "Minimal Darknight" interface to:
 
   * Display real-time environment scores.
   * Visualize trends in PM levels, noise, and temperature.
@@ -82,7 +91,7 @@ The **Streamlit** application provides a professional "Minimal & Zen" interface 
   * Python 3.9+
   * Node-RED
   * SQL Database (PostgreSQL/MySQL)
-  * Google Cloud Platform (GCP) Service Account for Google Sheets API
+  * Google Cloud Platform (GCP) Service Account for Google Sheets API (.json key file)
 
 ### 1\. Clone the Repository
 
@@ -91,11 +100,11 @@ git clone https://github.com/ProudHokori/SleepSense.git
 cd sleepsense
 ```
 
-### 2\. Backend Setup (Node-RED)
+### 2\. Backend Setup
 
-  * Import the provided flow JSON from the `/node-red` directory.
-  * Configure your MQTT broker credentials.
-  * Update SQL connection strings in the DB nodes.
+  * Node-RED flow JSON is in the `/backend` directory.
+  * Configure your MQTT broker credentials. 
+  * Update SQL connection strings in the DB nodes. `config.py`
 
 ### 3\. Analytics Setup
 
