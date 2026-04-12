@@ -87,7 +87,7 @@ The **Streamlit** application provides a professional "Minimal & Zen" interface 
 ### 1\. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/sleepsense.git
+git clone https://github.com/ProudHokori/SleepSense.git
 cd sleepsense
 ```
 
