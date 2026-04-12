@@ -1,4 +1,4 @@
-![System Architecture](images/SleepSense_Logo.png)
+![Sleep Sense Logo](images/SleepSense_Logo.png)
 
 # SleepSense: Sleep Environment Monitoring System
 
@@ -20,7 +20,7 @@ Sleep quality is often dictated by invisible environmental factors. SleepSense b
 
 The system follows a multi-zone architecture from data acquisition to presentation.
 
-![System Architecture](images/SleepSense_System_Diagram.png)
+![Sleep Sense System Architecture](images/SleepSense_System_Diagram.png)
 
 ### 1\. Field Zone (Data Acquisition)
 
@@ -49,9 +49,9 @@ We utilize a **KidBright** board to collect data from four primary sensors, cali
 
 **3 RESTful endpoints** were developed via Node-RED for data accessibility:
 
-1.  `GET /api/sleepsense/`: Fetches all sensor data and the latest reading for real-time scoring.
-2.  `GET /api/sleepsense/range?start={T1}&end={T2}`: Retrieves specific time-range data for model training.
-3.  `GET /api/sleepsense/score`: Stores history of calculated scores and factors for longitudinal analysis.
+1.  [`GET /api/sleepsense/`](https://iot.cpe.ku.ac.th/red/b6410545576/api/sleepsense/):  Fetches all sensor data and the latest reading for real-time scoring.
+2.  [`GET /api/sleepsense/range?start={T1}&end={T2}`](https://iot.cpe.ku.ac.th/red/b6410545576/api/sleepsense/range?start=2026-04-05%2002:00:00&end=2026-04-10%2002:00:00): Retrieves specific time-range data for model training.
+3.  [`GET /api/sleepsense/score`](https://iot.cpe.ku.ac.th/red/b6410545576/api/sleepsense/score): Stores history of calculated scores and factors for longitudinal analysis.
 
     ![API Making Flow NodeRED](images/SleepSense_API_Making_Flow_NodeRED.png)   
 
