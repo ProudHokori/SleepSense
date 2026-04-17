@@ -62,7 +62,7 @@ We utilize a **KidBright** board to collect data from four primary sensors, cali
 The data processing is handled in a Jupyter Notebook environment:
 
 1.  **Data Integration:** Merging `sensor_table`, `checkin_table`, and `research_table`.
-2.  **Sampling:** To prevent bias, the system randomly samples **5 rows per sleep session** to ensure equal weighting across different nights.
+2.  **Session Aggregation:** To prevent pseudo-replication bias, the system **aggregates all sensor readings within a sleep window using the median** — collapsing multiple raw readings into one representative environment vector per session, and making all nights contribute equally regardless of how many sensor readings they contain.
 3.  **Preprocessing:** Data cleaning (outliers/missing values), Exploratory Data Analysis (EDA), and **Scaling** for normalization.
 4.  **Modeling:** We compared several regression models to predict Sleep Scores:
       * Linear Regression
@@ -122,6 +122,6 @@ pip install -r requirements_app.txt
 ### 4\. Run the Dashboard
 
 ```bash
-python -m streamlit run sleepsense_app_refined.py  
+python -m streamlit run sleepsense_app.py  
 ```
 

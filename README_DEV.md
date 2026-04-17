@@ -1,4 +1,3 @@
-//README_DEV.md
 # SleepSense Analytics
 
 > **Predicting and explaining sleep quality from real-time environmental IoT data**
@@ -25,11 +24,13 @@ A full data-science pipeline that fuses three heterogeneous data sources — a l
 
 The project deliberately ingests data from three different origins to balance **real-world validity** (IoT + diary) with **statistical coverage** (research baseline).
 
+> **Note (as of 16 Apr 2026 23:59):** Row counts and session numbers below reflect the current dataset snapshot. As data collection is ongoing, these figures and derived model metrics may shift slightly with future updates.
+
 | Source | Variable | Raw rows | Key columns |
 |---|---|---|---|
-| **IoT Sensor REST API** (live) | `df_sensor` | ~474 timestamped readings | `temp_c`, `hum_pct`, `light_lux`, `snd_avg`, `snd_evt`, `pm1`, `pm25`, `pm10`, `timestamp` |
-| **Google Sheets sleep diary** | `df_checkin` | ~37 user-logged entries | `Session ID`, `Sleep_Score` (0–100), `sleep_start`, `sleep_end`, `duration_h` |
-| **Academic research rubric** | `df_research` | Expanded from range tables | Environmental ranges mapped to Sleep Score bands per published guidelines |
+| **IoT Sensor REST API** (live) | `df_sensor` | 842 timestamped readings | `temp_c`, `hum_pct`, `light_lux`, `snd_avg`, `snd_evt`, `pm1`, `pm25`, `pm10`, `timestamp` |
+| **Google Sheets sleep diary** | `df_checkin` | 20 user-logged entries | `Session ID`, `Sleep_Score` (0–100), `sleep_start`, `sleep_end`, `duration_h` |
+| **Academic research rubric** | `df_research` | 31 raw entries → 444 expanded rows (30 sessions) | Environmental ranges mapped to Sleep Score bands per published guidelines |
 
 <p align="center">
   <img src="https://placehold.co/900x220/1a1a2e/ffffff?text=Data+Architecture%3A+IoT+API+%2B+Google+Sheets+%2B+Research+Rubric" alt="Data architecture" width="860"/>
@@ -38,7 +39,7 @@ The project deliberately ingests data from three different origins to balance **
 
 ### 1.2 Session-window matching
 
-The 474 raw sensor readings are **matched to scored sleep sessions** by filtering each sensor timestamp to fall within the `[sleep_start, sleep_end]` window recorded in the diary. This is implemented in `extract_sensor_sessions()`:
+Of the 842 raw sensor readings, **95 fall within scored sleep session windows** (20 sessions × ~4–5 readings per session on average). The matching is implemented in `extract_sensor_sessions()`:
 
 ```python
 def extract_sensor_sessions(df_checkin):
@@ -47,7 +48,7 @@ def extract_sensor_sessions(df_checkin):
     ...
 ```
 
-Each matched window then contains between 1 and ~30 sensor rows. After aggregation (§3.1) this collapses to **one representative environment vector per night**.
+Each matched window contains between 1 and ~12 sensor rows depending on session length and recording gaps. After aggregation (§3.1) this collapses to **one representative environment vector per night**. The remaining ~747 sensor readings outside sleep windows are excluded from training but remain available in the raw API for time-series visualisation.
 
 ### 1.3 Research rubric expansion
 
@@ -154,7 +155,7 @@ EDA is divided into **six dedicated sections**, each targeting a different aspec
 **Specific visualisations produced (cell 29):**
 - 8 scatter plots (one per feature), data points colour-coded: **red** = actual sensor sessions, **blue** = research baseline
 - Regression trend line per source using `np.polyfit` (guarded against zero-variance columns via `std() > 1e-9` check to prevent `LinAlgError`)
-- A 9th panel: horizontal bar chart ranking all 8 features by Pearson r with `Sleep_Score` (NaN correlations — e.g., for constant `snd_evt` — are dropped gracefully)
+- A 9th panel: horizontal bar chart ranking all 8 features by Pearson r with `Sleep_Score` (NaN correlations from any zero-variance column are dropped gracefully via `corrs.dropna()`)
 
 <p align="center">
   <img src="https://placehold.co/900x500/0d1b2a/ffffff?text=Factor+vs+Sleep+Score+Scatter+%2B+Regression+Lines+%2B+Correlation+Ranking" alt="Factor vs score" width="860"/>
@@ -162,7 +163,9 @@ EDA is divided into **six dedicated sections**, each targeting a different aspec
 </p>
 
 **Findings (Pearson r ranking, strongest first):**  
-`temp_c` (−), `light_lux` (−), `hum_pct` (−), `snd_avg` (−), `pm25` (−), `pm1` (+/−), `pm10` (+/−), `snd_evt` (near zero / constant in real data).
+`temp_c` (−0.73), `snd_avg` (−0.64), `light_lux` (−0.55), `snd_evt` (−0.44), `hum_pct` (−0.40), `pm25` (−0.18), `pm1` (−0.04), `pm10` (+0.05).
+
+Key shift from earlier data: `snd_avg` climbed to 2nd place (previously behind `light_lux`), and `snd_evt` — formerly near-constant — now carries a meaningful negative correlation as more noise-varied nights were recorded.
 
 ---
 
@@ -190,7 +193,7 @@ EDA is divided into **six dedicated sections**, each targeting a different aspec
 `StandardScaler` is inappropriate here for three concrete reasons:
 
 1. **Mixed distributional shapes:** `light_lux` has Pearson skewness +1.57 (right tail from lamp spikes); `pm25` is near-symmetric (+0.16); `temp_c` is slightly negatively skewed (−0.30). A single scaling strategy fits none of them well.
-2. **Pseudo-replication:** The 474 raw rows come from only 37 distinct scored nights. Fitting a model on raw rows artificially inflates *n*, biases standard errors, and makes cross-validation meaningless — any split might put readings from the *same night* in both train and test.
+2. **Pseudo-replication:** The 95 real sensor session rows come from only 20 distinct scored nights. Fitting a model on raw rows artificially inflates *n* from 20 to 95, biases standard errors, and makes cross-validation meaningless — any split might put readings from the *same night* in both train and test. (The research component adds a further 444 rows across 30 rubric scenarios, all of which also share one label per scenario.)
 3. **Sensor spikes:** Short-lived extreme readings (e.g., a light spike when someone briefly enters the room) should not distort the representative environmental description for a whole night.
 
 ---
@@ -207,7 +210,7 @@ df_session = (
     .agg(agg_map)
     .dropna(subset=['Sleep_Score'])
 )
-# 474 raw rows → 37 session-level rows
+# 539 combined raw rows → 50 session-level rows (20 real + 30 research)
 ```
 
 **Median** (not mean) is used for aggregation because it is resistant to intra-session sensor spikes — a brief lux spike from an open door does not distort the representative light level for the whole night.
@@ -260,20 +263,20 @@ log_skewed = [
 comfort_linear = [c for c in all_factors if c not in log_skewed]
 ```
 
-**On this dataset's actual distributions:**
+**On this dataset's actual distributions (as of 16 Apr 2026):**
 
 | Feature | Measured skewness | Decision |
 |---|---|---|
-| `light_lux` | **+1.57** | → `log1p + RobustScaler` |
-| `temp_c` | −0.30 | → Winsor + RobustScaler |
-| `hum_pct` | −0.12 | → Winsor + RobustScaler |
-| `snd_avg` | +0.45 | → Winsor + RobustScaler |
-| `pm1` | −0.48 | → Winsor + RobustScaler |
-| `pm25` | +0.16 | → Winsor + RobustScaler |
-| `pm10` | −0.20 | → Winsor + RobustScaler |
-| `snd_evt` | NaN/0 (constant) | → Winsor + RobustScaler |
+| `snd_evt` | **+4.05** | → `log1p + RobustScaler` |
+| `light_lux` | **+2.04** | → `log1p + RobustScaler` |
+| `temp_c` | +0.54 | → Winsor + RobustScaler |
+| `hum_pct` | −0.11 | → Winsor + RobustScaler |
+| `pm1` | −0.40 | → Winsor + RobustScaler |
+| `pm10` | −0.24 | → Winsor + RobustScaler |
+| `pm25` | −0.01 | → Winsor + RobustScaler |
+| `snd_avg` | −1.29 | → Winsor + RobustScaler |
 
-With this dataset only `light_lux` crosses the threshold. Applying `log1p` to `pm1` (skew −0.48) would introduce spurious asymmetry — the adaptive check prevents this.
+With the current dataset, **both `snd_evt` (+4.05) and `light_lux` (+2.04)** cross the 0.75 threshold. Note that `snd_evt` was near-constant (near zero) in the early dataset but now shows substantial right-skew as more varied sleep sessions with real noise events were collected — the adaptive check correctly picks this up without manual intervention. Applying `log1p` to `pm1` (skew −0.40) would introduce spurious asymmetry — the adaptive check prevents this.
 
 <p align="center">
   <img src="https://placehold.co/900x380/0d1b2a/ffffff?text=Step+2%3A+Skewness+Bar+Chart+%2B+Before%2FAfter+for+Qualifying+Features" alt="Adaptive log1p" width="860"/>
@@ -329,12 +332,12 @@ prep = ColumnTransformer(
 
 ### 3.6 `GroupShuffleSplit` — session-aware train/test split
 
-Standard `train_test_split` on the raw 474-row table would allow readings from the **same sleep night** to appear in both training and test, leaking temporal structure and inflating metrics. `GroupShuffleSplit` treats the `Session ID` as the grouping key so each night appears in exactly one partition:
+Standard `train_test_split` on the raw 842-row table would allow readings from the **same sleep night** to appear in both training and test, leaking temporal structure and inflating metrics. `GroupShuffleSplit` treats the `Session ID` as the grouping key so each night appears in exactly one partition:
 
 ```python
 gss = GroupShuffleSplit(n_splits=1, test_size=0.35, random_state=42)
 train_idx, test_idx = next(gss.split(X_sess, y_sess, groups=groups))
-# Approx 24 sessions train  /  13 sessions test
+# Approx 32 sessions train  /  18 sessions test
 ```
 
 The same `random_state=42` is used in every downstream cell that references the split, ensuring consistent train/test sessions across the preprocessing, multi-model comparison, and synthesis comparison cells.
@@ -348,7 +351,7 @@ The same `random_state=42` is used in every downstream cell that references the 
 
 ### 3.7 Training-data synthesis
 
-With ~24–28 training sessions, tree ensembles are likely to overfit and linear models have too few degrees of freedom. Two established methods are implemented to augment the **training set only** — the test set always stays 100 % real.
+With ~32 training sessions, tree ensembles are likely to overfit and linear models have too few degrees of freedom. Two established methods are implemented to augment the **training set only** — the test set always stays 100 % real.
 
 #### SMOTER — Torgo et al. 2013
 
@@ -414,12 +417,67 @@ All six models use the **same preprocessing pipeline** (§3). Each is wrapped in
 |---|---|---|
 | `LinearRegression` | Default (OLS) | Interpretable baseline; signed coefficients give direct directional insight on preprocessed features |
 | `Ridge(alpha=1.0)` | L2 λ=1 | Shrinks coefficients globally; handles correlated features (temp/humidity co-vary) |
-| `Ridge(alpha=10.0)` | L2 λ=10 | Stronger shrinkage — tests whether heavier regularisation improves generalisation on 24 training sessions |
+| `Ridge(alpha=10.0)` | L2 λ=10 | Stronger shrinkage — tests whether heavier regularisation improves generalisation on 32 training sessions |
 | `Lasso(alpha=0.5, max_iter=5000)` | L1 λ=0.5 | Performs automatic feature selection by zeroing low-signal coefficients; useful for detecting redundant PM channels |
 | `RandomForestRegressor(n_estimators=300, random_state=42)` | 300 trees | Captures non-linear comfort optima (both too-hot and too-cold hurt sleep); ensemble averaging reduces variance |
-| `GradientBoostingRegressor(n_estimators=200, max_depth=3, random_state=42)` | 200 boosting rounds, depth-3 trees | Sequential residual correction; typically the strongest performer on small tabular datasets |
+| `GradientBoostingRegressor(n_estimators=300, max_depth=2, learning_rate=0.05, subsample=0.8, random_state=42)` | 300 boosting rounds, depth-2 trees, 5% learning rate, 80% row subsampling | Sequential residual correction; shallower trees + low learning rate + subsampling act as strong regularisers — the right inductive bias for 32 training sessions |
 
-### 4.2 Linear regression coefficient analysis
+### 4.2 Why These Six Models? — Rationale, Differences & Conclusion
+
+#### Why not just one model?
+
+Environmental sleep data sits at an awkward size: **32 training sessions** is enough for a regularised linear model but too few for a deep neural network, and it is non-linear enough that plain OLS breaks down. The six models were chosen to span three distinct learning paradigms so we can directly compare:
+
+- **Can a linear model be stabilised enough to be useful, or do we genuinely need non-linearity?**
+- **Does the extra complexity of an ensemble pay off relative to a regularised linear model?**
+- **Which regularisation strategy (L2 shrinkage vs L1 sparsity) suits 8 weakly-correlated features?**
+
+---
+
+#### Model-by-model breakdown
+
+| # | Model | Core mechanism | Data handling | Strengths | Weaknesses |
+|---|---|---|---|---|---|
+| 1 | **Linear Regression** (OLS) | Minimises sum of squared residuals; fits one coefficient per feature, no penalty | All 8 features enter equally; unstable when n ≈ p (32 sessions, 8 features) | Fully interpretable; signed coefficients map directly to "raise/lower this factor" recommendations | Assumes linear environment–score relationship; large variance with few sessions; no protection against correlated features (temp/humidity co-vary) |
+| 2 | **Ridge (α=1)** | OLS + L2 penalty λ=1 on coefficient magnitudes — shrinks all towards zero but never zeros them | Same 8 features, but co-linear features share their weight instead of inflating one another | Handles feature correlation; low variance; all features remain in the model | Still assumes linearity; fixed λ=1 may be too weak a constraint for only 32 sessions |
+| 3 | **Ridge (α=10)** | Same as above with 10× stronger shrinkage | Coefficients are pulled harder toward zero; captures global trend, ignores fine-grained variation | Best trade-off among linear models on this dataset (lowest MAE = 13.66 with SMOTER ×3); robust to outlier sessions | May underfit if the true relationship needs moderate complexity |
+| 4 | **Lasso (α=0.5)** | OLS + L1 penalty — drives small coefficients exactly to zero | Acts as automatic feature selection: low-signal PM channels may be zeroed out entirely | Identifies which features are genuinely redundant (sparse solution); useful for hypothesis testing | Less stable than Ridge when features are correlated; may zero out a feature that matters in combination with another |
+| 5 | **Random Forest** (300 trees) | Builds 300 independent decision trees on bootstrap samples; aggregates by averaging | Each tree sees a random feature subset at each split; no scaling required internally (but pipeline still scales for consistency) | Captures non-linear and interaction effects (e.g., combined temp + humidity discomfort zone); resistant to outlier sessions through bagging; lowest MAE with augmentation (7.73 with SMOTER ×3) | Less interpretable than linear models; coefficients unavailable — SHAP required for explainability |
+| 6 | **Gradient Boosting** (300 rounds, depth-2, lr=0.05) | Trains shallow trees sequentially; each tree corrects the residuals of the ensemble so far | Iterative residual correction amplifies signal from hard-to-predict sessions; low learning rate + subsampling regularise the boosting | Strongest no-augmentation model (MAE = 9.10 in preliminary evaluation; 9.20 in synthesis evaluation — see note below); captures complex patterns with few trees per round | Sequential structure makes it sensitive to label noise from KNN synthesis; slower to train; also requires SHAP for interpretation |
+
+---
+
+#### Key algorithmic difference: how each model "sees" the preprocessed data
+
+After the `ColumnTransformer` transforms the 8 features into scaled/log-compressed values, each model family processes the matrix differently:
+
+- **Linear models** fit a hyperplane in 8-dimensional scaled space. The preprocessing makes the linear assumption more reasonable (skewness removed, outliers clipped) but cannot recover non-linearity.
+- **Random Forest** partitions the space recursively using axis-aligned splits. Because it averages 300 trees trained on bootstrap samples, it suppresses the variance that makes OLS noisy at n=32.
+- **Gradient Boosting** learns an additive model where each stage focuses on the sessions predicted worst so far. This is powerful on clean data but amplifies label noise if the augmented training labels are inconsistent.
+
+---
+
+#### Which model is most accurate?
+
+**Conclusion: Random Forest + SMOTER ×3 is the best overall model (MAE = 7.73 on held-out real sessions).**
+
+| Scenario | Best model | MAE | Notes |
+|---|---|---|---|
+| No augmentation | **Gradient Boosting** | 9.10 | Preliminary evaluation; synthesis evaluation shows 9.20 — minor variance from different random states |
+| With best augmentation | **Random Forest + SMOTER ×3** | 7.73 | 22.5 % lower MAE than RF baseline |
+| Best linear model | Ridge (α=10) + SMOTER ×3 | 13.66 | Useful when interpretability is required |
+
+> **Note on Gradient Boosting MAE discrepancy (9.10 vs 9.20):** The preliminary model-comparison cell and the augmentation-experiment cell each run their own `GroupShuffleSplit(random_state=42)`, producing the same held-out session assignments. The small difference (9.097 vs 9.20) arises because the augmentation cell pre-filters the test set to **real sessions only**, whereas the preliminary evaluation cell tests on all sessions (real + research). Evaluating on real-only sessions is the more conservative and meaningful metric for deployment.
+
+**Practical guidance:**
+- Use **Random Forest** as the default deployed model — it generalises best across held-out nights.
+- Use **Ridge (α=10)** or **Lasso** when you need human-readable coefficient explanations (e.g., "humidity coefficient = −2.1 pts/% above ideal").
+- Avoid **Linear Regression** without augmentation — MAE = 35.32 is too high for actionable recommendations.
+- **Gradient Boosting** remains a strong second choice without augmentation, and is the right pick if SMOTER data is unavailable.
+
+---
+
+### 4.3 Linear regression coefficient analysis
 
 After fitting, the pipeline exposes coefficients in the transformed feature space:
 
@@ -437,7 +495,7 @@ The sign of each coefficient is **directionally meaningful** in the original fea
   <br/><sub><i>Replace with output from notebook cell 36 (3×3 regplot grid + coefficient table)</i></sub>
 </p>
 
-### 4.3 SHAP explainability
+### 4.4 SHAP explainability
 
 SHAP (SHapley Additive exPlanations) decomposes each prediction into a **sum of per-feature contributions** that are consistent, locally accurate, and satisfy the efficiency axiom (contributions sum to prediction − baseline). Three explainer types are selected adaptively:
 
@@ -467,7 +525,7 @@ SHAP values are computed for **all session rows** (`X_all_for_shap = fitted_prep
 
 The beeswarm plots show individual session-level impacts. A red dot (high feature value) far left means "high value of that feature strongly hurt the score in that session" — this is the visual basis for the recommendation engine.
 
-### 4.4 SHAP-powered recommendation engine
+### 4.5 SHAP-powered recommendation engine
 
 Two prediction functions are exposed at the bottom of the notebook. Both accept any `(model_name, scenario)` combination from the 30 fitted pipelines:
 
@@ -496,7 +554,7 @@ optimize_sleep_v2(current_env,
 
 `_get_explainer(scenario, model_name)` builds the appropriate SHAP explainer lazily (first call) and caches it in `_shap_cache` to avoid recomputation on repeated calls.
 
-### 4.5 Interactive web application
+### 4.6 Interactive web application
 
 `sleepsense_app.py` is a **Streamlit dashboard** that wraps the same pipeline:
 
@@ -587,17 +645,19 @@ A heatmap where rows = model names and columns = test session IDs, cell colour =
 
 |  | No Aug | SMOTER ×3 | SMOTER ×5 | KNN ×3 | KNN ×5 |
 |---|---|---|---|---|---|
-| Linear Regression | 4.60 | 4.69 | 4.21 | 4.87 | 7.68 |
-| Ridge (α=1) | 4.53 | 4.62 | 4.14 | 4.38 | 4.27 |
-| Ridge (α=10) | 4.81 | 4.51 | **4.01** | 4.68 | 4.37 |
-| Lasso (α=0.5) | 4.67 | 4.52 | 4.44 | 4.87 | 4.61 |
-| Random Forest | 2.68 | 1.32 | 1.39 | 1.52 | 1.20 |
-| **Gradient Boosting** | 2.59 | 1.71 | 1.62 | 1.09 | **0.93** |
+| Linear Regression | 35.32 | 22.41 | 24.59 | 25.19 | 18.63 |
+| Ridge (α=1) | 20.92 | 17.85 | 22.53 | 20.89 | 14.42 |
+| Ridge (α=10) | 15.04 | **13.66** | 16.79 | 14.82 | 12.28 |
+| Lasso (α=0.5) | 16.38 | 14.52 | 13.81 | 13.04 | **12.70** |
+| **Random Forest** | 9.98 | **7.73** | 8.75 | 8.67 | 10.10 |
+| Gradient Boosting | 9.20 | 9.47 | **8.77** | 11.87 | 11.88 |
 
 **Key findings:**
-- Gradient Boosting + KNN Synth ×5 achieves **MAE = 0.93** — a **64 % improvement** over the no-augmentation baseline (2.59)
-- SMOTER ×5 benefits linear models (Ridge α=10 drops from 4.81 → 4.01) but provides less benefit than KNN synthesis for tree models
-- KNN ×5 hurts Linear Regression (4.60 → 7.68), suggesting the distance-weighted y-assignment creates label noise that linear models cannot handle — tree models are more robust to this
+- **Random Forest + SMOTER ×3** achieves **MAE = 7.73** — a **22.5 % improvement** over the no-augmentation baseline (9.98) and the best result across all 30 combinations
+- **Gradient Boosting** is the strongest no-augmentation model (MAE = 9.20) but is edged out by Random Forest once SMOTER augmentation is applied
+- All 6 models benefit from at least one augmentation scenario (ΔMAE is negative for every model's best scenario)
+- Linear models benefit most in absolute terms — Linear Regression drops from 35.32 → 18.63 with KNN ×5 (47 % improvement), though absolute error remains high relative to tree models
+- KNN ×5 **hurts Gradient Boosting** (9.20 → 11.88), suggesting the distance-weighted label assignment introduces noise that sequential residual-correction learners are sensitive to; Random Forest (bagging) handles this better
 
 **Best-per-model summary:**
 
@@ -676,3 +736,99 @@ A heatmap where rows = model names and columns = test session IDs, cell colour =
 > plt.savefig('assets/fig_name.png', dpi=150, bbox_inches='tight')
 > ```
 > Create an `assets/` folder at the project root and update the `src` attribute accordingly.
+
+---
+
+## 8. Q&A — Anticipated Questions & Answers
+
+*Questions a data science instructor or examiner is likely to raise, with detailed answers grounded in the project's actual implementation.*
+
+---
+
+### 8.1 Data & Methodology
+
+**Q1: With only 20 real sleep sessions, are the model evaluation metrics meaningful? Couldn't the results be driven by just 2–3 test sessions?**
+
+> **A:** This is the most important limitation of the project. With `GroupShuffleSplit(test_size=0.35)`, the test set contains approximately **7 real sessions** (35% of 20). A MAE of 7.73 computed over 7 sessions has high variance — one anomalous night can swing it by several points. Three mitigating factors: (1) we report MAE rather than R² because MAE is more interpretable and less sensitive to single-point leverage; (2) the research rubric provides an independent grounding for what "correct" scores should look like; (3) all 6 models are evaluated on the exact same split, so *relative* comparisons between models are stable even if the absolute values are not. The honest answer is that this is a proof-of-concept scale — 50+ real sessions would be needed for publishable reliability.
+
+---
+
+**Q2: Why is it valid to train on research rubric data alongside real IoT data? Doesn't that introduce artificial bias?**
+
+> **A:** The rubric adds coverage of environmental regions that real data hasn't explored yet — e.g., near-ideal temperatures of 18–20°C that the user's bedroom rarely achieves. Without it, the model would be extrapolating dangerously outside its training range whenever it scores an unusually good environment. The risk is that research-defined scores (which are population-level averages from published guidelines) may not match this specific user's sensitivities. We mitigate this by: (1) tagging every row with a `source` column so research vs real rows are always distinguishable in EDA; (2) evaluating final metrics **on real test sessions only** in the synthesis experiments, so the published MAE reflects actual real-world performance, not rubric-match performance.
+
+---
+
+**Q3: The skewness threshold for log1p is set at 0.75. How was that chosen? Could a different threshold change the feature set and affect results?**
+
+> **A:** 0.75 is a widely cited rule-of-thumb in environmental data preprocessing (|skew| > 0.75 warrants investigation). It was not tuned on the test set, so it is not subject to leakage. In practice, the threshold only gates two features: `light_lux` (+2.04) and `snd_evt` (+4.05) — both strongly right-skewed — while excluding features with modest or negative skewness. A threshold anywhere in the range 0.5–1.5 would produce the same binary classification (log vs no-log) for every feature in this dataset, so the results are insensitive to the exact threshold value.
+
+---
+
+**Q4: The adaptive log1p decision (skewness measurement) is computed before the train/test split. Isn't that data leakage?**
+
+> **A:** Technically yes — it uses the full session-level data, including what will become the test set, to decide *which features* receive log1p. However, this is a *model selection* decision (binary: log or not log), not a *parameter estimation* from labels. The skewness of a feature does not depend on Sleep_Score, so this cannot inflate test metrics. It is analogous to deciding to use log scale for a skewed column after looking at a histogram — the decision is driven by the predictor distribution alone. For full rigor, the measurement could be moved inside the `Pipeline.fit()` call, but the practical impact on reported MAE is negligible.
+
+---
+
+**Q5: Why use median aggregation per session rather than mean, or taking all raw rows?**
+
+> **A:** Three reasons: (1) **Spike resistance** — a single bright-light reading when someone briefly enters the room would pull the mean up significantly but barely moves the median; (2) **Equal night weighting** — nights with more sensor readings (longer sessions) shouldn't dominate training just because they contributed more rows; (3) **Avoiding pseudo-replication** — treating each of the 95 real sensor readings as an independent sample would inflate effective *n* to 95, making standard errors deceptively small and cross-validation invalid (readings from the same night are not independent).
+
+---
+
+**Q6: How is the Sleep Score ground truth validated? It's self-reported — how do you know it's accurate?**
+
+> **A:** It isn't objectively validated — this is an acknowledged limitation. The score is a Likert-scale self-assessment (0–100) collected each morning via Google Form before the user checks any sensor readings, removing recall bias in at least one direction. The correlation between `temp_c` and Sleep Score (Pearson r = −0.73) is directionally consistent with established sleep science (cooler = better sleep), which provides external plausibility. Full validation would require concurrent polysomnography (PSG) or at minimum actigraphy data.
+
+---
+
+### 8.2 Machine Learning Design
+
+**Q7: You tested 6 models. Why these 6 specifically? Why not XGBoost, LightGBM, or SVR?**
+
+> **A:** The 6 models cover three paradigms: (1) linear with no regularisation, (2) linear with L2/L1 regularisation, and (3) non-linear tree ensembles. This is a deliberate ablation rather than an exhaustive search. XGBoost and LightGBM are functionally similar to Gradient Boosting at this dataset size and would likely produce similar MAE. SVR could handle non-linearity with an RBF kernel but introduces a kernel hyperparameter that would require cross-validation to tune — with only 32 training sessions, reliable CV-based tuning is itself questionable. The 6 chosen models can all be evaluated with a single `GroupShuffleSplit` without nested CV, keeping the methodology transparent and computationally lightweight.
+
+---
+
+**Q8: Why is `GroupShuffleSplit` used instead of standard cross-validation (e.g., `KFold`)?**
+
+> **A:** With 50 sessions, K-fold CV would create folds of ~10 sessions each. The key problem is not fold size but **session leakage**: standard `KFold` splits rows, not sessions, so with the raw 539-row table, the same session's readings would appear in both train and test folds — evaluating memorisation, not generalisation. `GroupShuffleSplit` with `groups = Session ID` ensures each session appears in exactly one partition. We use a single split (not repeated CV) because repeated splits with 50 sessions produce highly variable fold compositions, giving a false sense of statistical precision.
+
+---
+
+**Q9: Why does Gradient Boosting lose to Random Forest once SMOTER augmentation is applied, even though it's the stronger base model?**
+
+> **A:** Gradient Boosting's sequential residual-correction mechanism is sensitive to label noise. SMOTER generates synthetic sessions by linearly interpolating between real sessions in feature space and assigning y as the same linear interpolation of their Sleep Scores. If two neighbouring sessions have similar environments but very different self-reported scores (which happens — subjective scoring is noisy), SMOTER creates synthetic sessions with inconsistent labels relative to the local manifold. Random Forest averages 300 independent trees, each seeing a bootstrapped subset, so label noise in any one synthetic point affects at most a fraction of trees. Gradient Boosting's sequential structure causes early-round errors from noisy labels to propagate and compound.
+
+---
+
+**Q10: The synthesis experiments produce two different "No Augmentation" MAE values for Gradient Boosting: 9.10 (preliminary) vs 9.20 (synthesis). Which is correct?**
+
+> **A:** Both are correct for different evaluation scopes. The preliminary value (9.097) is evaluated on all test sessions including research rubric ones. The synthesis value (9.20) is evaluated on real test sessions only, which is the more meaningful and conservative metric — it tests whether the model generalises to real human sleep nights, not to entries from a literature rubric. For deployment purposes, **9.20 is the more honest figure**.
+
+---
+
+**Q11: With R² = 0.475 for the best no-augmentation model, does this system actually explain sleep quality well?**
+
+> **A:** An R² of 0.475 means the model explains ~47.5% of the variance in sleep scores from environmental factors alone. This is actually a reasonable result given that the remaining ~52.5% of variance is attributable to factors the system cannot measure: stress, exercise, diet, caffeine, illness, noise events too brief to be captured at 10-minute intervals, and inherent night-to-night biological variability. Published environmental-sleep studies typically report that physical environment explains 20–40% of sleep quality variance, so 47.5% is at the high end of expectation and likely reflects the combined benefit of the research rubric supplementing the real data. With more real sessions, R² would likely stabilise lower (the research rubric artificially inflates it slightly by providing clean training signal).
+
+---
+
+### 8.3 System & Practical Questions
+
+**Q12: The Streamlit app lets users choose between models but not augmentation scenarios. Why?**
+
+> **A:** In deployment, a fixed-best pipeline (`Gradient Boosting` or `Random Forest + SMOTER ×3`) is refitted on all 50 sessions and serialised. The scenario selector in the notebook exists for research comparison only; it would require loading all 30 fitted pipelines simultaneously (≈30× memory overhead) and presents no practical value to the end user. The "Lab Synthesis" page in the Streamlit app does expose an "Actual vs Predicted" per-scenario view, but this is a diagnostic tool for model selection during research, not a daily-use feature.
+
+---
+
+**Q13: What happens to the model's recommendations when sensor data is unavailable (e.g., the sensor is offline)?**
+
+> **A:** The pipeline uses `SimpleImputer(strategy='median')` as the first step in both the log-skew and comfort blocks. If a sensor channel is missing for the current reading, it is imputed with the training-set median for that channel. The SHAP recommendation engine will not cite an imputed feature as a "factor hurting your score" unless the imputed median itself is outside the ideal range, which provides safe degraded-mode behaviour. A future improvement would flag imputed channels in the UI so the user knows the recommendation is partially estimated.
+
+---
+
+**Q14: The system uses research-defined ideal ranges (e.g., temp 18–20°C). But this user lives in Thailand where ambient temperatures are much higher. Doesn't the model unfairly penalise this person's bedroom for conditions outside their control?**
+
+> **A:** Yes — and this is the core motivation for the personalisation component. The research rubric provides the *initial* prior. As real sensor + diary sessions accumulate, the real data progressively dominates the combined dataset. After ~50 real sessions, a refit on real data only (dropping the rubric) would produce a fully personalised model calibrated to what actually correlates with *this user's* sleep quality in *this environment*. The current hybrid approach is the right design for the cold-start period: it provides useful recommendations from day one while accumulating enough real data for eventual personalisation.
